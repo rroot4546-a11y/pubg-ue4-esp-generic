@@ -16,13 +16,13 @@ fi
 TOOLCHAIN="$NDK/toolchains/llvm/prebuilt/linux-x86_64"
 CC="$TOOLCHAIN/bin/aarch64-linux-android24-clang"
 if [[ -x "$CC" ]]; then
-  "$CC" -O2 -Wall -Wextra -Werror -static -o "$OUT" "$SRC" -lm
+  "$CC" -O2 -Wall -Wextra -Werror -o "$OUT" "$SRC" -lm
 else
   RES="$TOOLCHAIN/lib64/clang/14.0.7"
   clang --target=aarch64-linux-android24 \
     --sysroot="$TOOLCHAIN/sysroot" -resource-dir="$RES" \
     -L"$RES/lib/linux/aarch64" \
-    -O2 -Wall -Wextra -Werror -static -fno-lto -o "$OUT" "$SRC" -lm
+    -O2 -Wall -Wextra -Werror -fno-lto -o "$OUT" "$SRC" -lm
 fi
 
 file "$OUT"
