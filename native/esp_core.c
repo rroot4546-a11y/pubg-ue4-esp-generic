@@ -93,28 +93,32 @@ static int load_cfg(const char *path) {
     return 1;
 }
 
-static pid_t find_pid(const char *pkg) {
+static pid_t next_pid(const char *pkg, pid_t after) {
     DIR *d = opendir("/proc");
     if (!d) return 0;
+    pid_t found = 0;
     struct dirent *e;
     while ((e = readdir(d))) {
         if (!isdigit((unsigned char)e->d_name[0])) continue;
-        char p[96], b[8192];
-        snprintf(p, sizeof p, "/proc/%s/cmdline", e->d_name);
-        int fd = open(p, O_RDONLY);
+        pid_t p = (pid_t)atoi(e->d_name);
+        if (p <= after || p <= 1) continue;
+        char path[96], buf[8192];
+        snprintf(path, sizeof path, "/proc/%s/cmdline", e->d_name);
+        int fd = open(path, O_RDONLY);
         if (fd < 0) continue;
-        ssize_t n = read(fd, b, sizeof b - 1);
+        ssize_t n = read(fd, buf, sizeof buf - 1);
         close(fd);
         if (n <= 0) continue;
-        b[n] = 0;
-        for (ssize_t i = 0; i < n; i++) if (!b[i]) b[i] = ' ';
-        if (strstr(b, pkg)) { closedir(d); return (pid_t)atoi(e->d_name); }
+        buf[n] = 0;
+        for (ssize_t i = 0; i < n; i++) if (!buf[i]) buf[i] = ' ';
+        if (strstr(buf, pkg)) { found = p; break; }
     }
     closedir(d);
-    return 0;
+    return found;
 }
 
 static void load_maps(void) {
+    g_nmaps = 0;
     char path[80];
     snprintf(path, sizeof path, "/proc/%d/maps", (int)g_pid);
     FILE *f = fopen(path, "r");
@@ -177,6 +181,16 @@ static int module_range(void) {
         }
     }
     return g_base != 0;
+}
+
+static int try_target(pid_t candidate) {
+    g_pid = candidate;
+    g_modlo = 0;
+    g_modhi = 0;
+    g_base = 0;
+    load_maps();
+    if (!detect_module()) return 0;
+    return module_range();
 }
 
 static int plausible_actors(u64 level, u64 *data_out, int *count_out, u64 *off_out) {
@@ -435,14 +449,18 @@ int main(int argc, char **argv) {
     if (argc > 4) load_cfg(argv[4]);
 
     fprintf(stderr, "# waiting for %s\n", pkg);
-    for (int wait = 0; wait < 900 && !g_pid; wait++) {
-        g_pid = find_pid(pkg);
-        if (!g_pid) usleep(100000);
+    int attached = 0;
+    for (int wait = 0; wait < 1200 && !attached; wait++) {
+        pid_t candidate = 0;
+        while ((candidate = next_pid(pkg, candidate))) {
+            if (try_target(candidate)) { attached = 1; break; }
+        }
+        if (!attached) usleep(250000);
     }
-    if (!g_pid) { fprintf(stderr, "# target not running\n"); return 4; }
-    load_maps();
-    if (!detect_module()) fprintf(stderr, "# no known module, using %s\n", g_lib);
-    if (!module_range()) { fprintf(stderr, "# module range failed\n"); return 5; }
+    if (!attached) {
+        fprintf(stderr, "# target module not mapped yet\n");
+        return 4;
+    }
     fprintf(stderr, "# pid=%d lib=%s base=0x%llx\n", (int)g_pid, g_lib,
             (unsigned long long)g_base);
 
