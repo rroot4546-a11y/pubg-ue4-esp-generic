@@ -190,7 +190,8 @@ static int try_target(pid_t candidate) {
     g_base = 0;
     load_maps();
     if (!detect_module()) return 0;
-    return module_range();
+    if (!module_range()) return 0;
+    return (g_modhi - g_modlo) >= (64ULL * 1024ULL * 1024ULL);
 }
 
 static int plausible_actors(u64 level, u64 *data_out, int *count_out, u64 *off_out) {
@@ -471,6 +472,11 @@ int main(int argc, char **argv) {
                 (unsigned long long)g_off.Actors);
     }
     u64 world = r64(g_base + g_off.GWorld);
+    if (!world && g_off.GWorld) {
+        fprintf(stderr, "# static GWorld empty, falling back to discovery\n");
+        if (!discover_world()) { fprintf(stderr, "# GWorld discovery failed\n"); return 6; }
+        world = r64(g_base + g_off.GWorld);
+    }
     if (!world) { fprintf(stderr, "# empty GWorld slot\n"); return 7; }
     u64 level = r64(world + g_off.Level);
     if (!is_obj(level)) { fprintf(stderr, "# bad level offset\n"); return 8; }
