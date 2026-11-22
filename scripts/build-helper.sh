@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$ROOT/native/esp_core.c"
 OUT="$ROOT/app/src/main/assets/esphelper64"
+mkdir -p "$(dirname "$OUT")"
 
 NDK="${ANDROID_NDK_HOME:-}"
 if [[ -z "$NDK" ]]; then
