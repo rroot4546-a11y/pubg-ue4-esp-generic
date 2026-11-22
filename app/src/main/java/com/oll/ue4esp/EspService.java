@@ -228,11 +228,6 @@ public final class EspService extends Service {
     }
 
     @Override
-    public IBinder onBinder() {
-        return null;
-    }
-
-    @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
