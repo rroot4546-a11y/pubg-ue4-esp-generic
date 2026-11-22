@@ -33,7 +33,7 @@ public final class MainActivity extends android.app.Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("UE4 ESP Generic");
+        setTitle("PUBG Flash ESP — com.tencent.igfit");
 
         ScrollView scroll = new ScrollView(this);
         LinearLayout root = new LinearLayout(this);
@@ -49,7 +49,7 @@ public final class MainActivity extends android.app.Activity {
         status.setTextSize(14f);
         root.addView(status);
 
-        pkgField = field(root, "Package (com.tencent.ig)", "com.tencent.ig");
+        pkgField = field(root, "Package (PUBG Flash)", "com.tencent.igfit");
         widthField = field(root, "Screen width", "1080");
         heightField = field(root, "Screen height", "2400");
 
@@ -71,6 +71,22 @@ public final class MainActivity extends android.app.Activity {
             } else {
                 toast("Overlay permission already granted");
             }
+        });
+
+        Button presetBtn = button(root, "Flash 4.6.1 preset (fill offsets)");
+        presetBtn.setOnClickListener(v -> {
+            manualOffsets.setChecked(true);
+            offsetsField.setText(
+                    "lib=libUE4.so\n" +
+                    "GWorld=0xF3B85F8\n" +
+                    "UWorld_Level=0x30\n" +
+                    "ULevel_Actors=0xA0\n" +
+                    "AActor_Root=0x168\n" +
+                    "UWorld_FirstPC=0x0\n" +
+                    "PC_AckPawn=0x0\n" +
+                    "PC_CamMgr=0x0\n" +
+                    "CamMgr_POV=0x0\n");
+            toast("preset filled — edit POV offsets if needed");
         });
 
         Button startBtn = button(root, "2. Start ESP");
