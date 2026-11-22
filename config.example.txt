@@ -1,0 +1,17 @@
+# module name; auto-detected if omitted
+lib=libUE4.so
+
+# all offsets are module-relative
+GWorld=0x0
+UWorld_Level=0x30
+ULevel_Actors=0xa0
+AActor_Root=0x168
+UScene_C2W=0x0
+UWorld_FirstPC=0x0
+PC_AckPawn=0x0
+PC_CamMgr=0x0
+CamMgr_POV=0x0
+
+# screen, overridden by the app at launch
+width=1080
+height=2400
